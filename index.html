@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Master Dashboard - Sounds System</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root { --red: #ff0000; --dark: #050000; --gray: #1a1a1a; --text: #ffffff; }
+        * { box-sizing: border-box; transition: all 0.3s ease; outline: none; }
+        body { background: var(--dark); color: var(--text); margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 320px; background: #050000; border-right: 1px solid #1a0000; display: flex; flex-direction: column; padding: 30px 20px; z-index: 100; }
+        .logo-frame { width: 100%; height: 150px; border: 2px solid var(--text); border-radius: 15px; box-shadow: 0 0 25px var(--text); margin-bottom: 40px; overflow: hidden; background: #000; }
+        .logo-frame img { width: 100%; height: 100%; object-fit: fill; }
+        .nav-link { padding: 16px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: #666; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        .nav-link:hover { background: #fff; color: #000; box-shadow: 0 0 40px #fff; transform: translateX(10px); }
+        .nav-link.active { border-left: 4px solid var(--red); color: #fff; background: rgba(255,0,0,0.1); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at top right, #1a0000, #000); position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 40px; }
+        .header h1 { margin: 0; font-size: 45px; text-transform: uppercase; letter-spacing: 2px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        
+        /* تصغير القوائم الأربعة داخل GTA بطلبك */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .folder-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; text-align: center; cursor: pointer; position: relative; backdrop-filter: blur(15px); }
+        .folder-card:hover { transform: translateY(-15px); border-color: var(--red); box-shadow: 0 20px 40px rgba(255,0,0,0.15); }
+        .card-icon { font-size: 50px; margin-bottom: 15px; display: block; }
+        
+        .kill-vid { width: 100%; height: 160px; border-radius: 15px; object-fit: cover; margin-bottom: 15px; border: 2px solid #222; }
+        .btn { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; }
+        .action-btn { background: #fff; color: #000; padding: 15px 40px; border-radius: 50px; width: auto; font-weight: 900; }
+        .action-btn:hover { background: var(--red); color: #fff; transform: scale(1.1); }
+        .btn-link { background: var(--red); color: #fff; margin-top: 10px; }
+        .btn-del { color: var(--red); background: transparent; font-size: 12px; margin-top: 10px; }
+        .back-link { color: var(--red); font-weight: bold; cursor: pointer; margin-bottom: 20px; display: block; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-frame"><img src="dmg.logo.png" alt="Logo"></div>
+        <nav>
+            <div class="nav-link active" onclick="switchTab('gta')">🎮 GTA V SYSTEM</div>
+            <div class="nav-link" onclick="switchTab('photos')">🖼️ BEST PHOTOS</div>
+            <div class="nav-link" onclick="switchTab('scripts')">📜 SCRIPTS HUB</div>
+            <div class="nav-link" onclick="switchTab('settings')" style="margin-top:auto;">⚙️ SETTINGS</div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div id="tab-gta">
+            <div id="view-folders">
+                <div class="header"><h1>GTA V Directory</h1></div>
+                <div class="folder-grid">
+                    <div class="folder-card" onclick="openFolder('SOUNDS')"><span class="card-icon">🔊</span><h3>SOUNDS</h3></div>
+                    <div class="folder-card" onclick="openFolder('GRAPHICS')"><span class="card-icon">🎬</span><h3>GRAPHICS</h3></div>
+                    <div class="folder-card" onclick="openFolder('KILLEFFECTS')"><span class="card-icon">💀</span><h3>KILL EFFECTS</h3></div>
+                    <div class="folder-card" onclick="openFolder('RESHADE')"><span class="card-icon">🎨</span><h3>RESHADE</h3></div>
+                </div>
+            </div>
+            <div id="view-files" class="hidden">
+                <span class="back-link" onclick="closeFolder()">← RETURN TO DIRECTORY</span>
+                <div class="header">
+                    <h1 id="folderTitle">Folder</h1>
+                    <button class="action-btn" onclick="triggerUpload()">+ UPLOAD NEW</button>
+                </div>
+                <div id="fileGrid" class="grid"></div>
+            </div>
+        </div>
+
+        <div id="tab-photos" class="hidden">
+            <div class="header"><h1>Best Photos</h1><button class="action-btn" onclick="document.getElementById('inpPhoto').click()">+ ADD PHOTO</button></div>
+            <div id="photoGrid" class="grid"></div>
+        </div>
+
+        <div id="tab-scripts" class="hidden"><div class="header"><h1>Scripts Hub</h1></div></div>
+        <div id="tab-settings" class="hidden"><div class="header"><h1>Settings</h1></div><button class="action-btn" style="background:red; color:white;" onclick="hardReset()">🗑️ RESET ALL DATA</button></div>
+    </main>
+
+    <input type="file" id="inpFile" class="hidden" onchange="uploadAction('file')">
+    <input type="file" id="inpVideo" class="hidden" accept="video/*" onchange="uploadAction('video')">
+    <input type="file" id="inpPhoto" class="hidden" accept="image/*" onchange="uploadAction('photo')">
+
+    <script>
+        // ربط السيرفر السحابي الخاص بك
+        const firebaseConfig = {
+            databaseURL: "https://mydashboard-87538-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const fbDB = firebase.database();
+
+        let currentFolder = '';
+        let currentTab = 'gta';
+
+        // مزامنة البيانات من السيرفر فوراً
+        fbDB.ref('master_data').on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            renderUI(data);
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            ['tab-gta', 'tab-photos', 'tab-scripts', 'tab-settings'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            if(window.event) window.event.currentTarget.classList.add('active');
+            if(tab === 'gta') closeFolder();
+        }
+
+        function openFolder(name) {
+            currentFolder = name;
+            document.getElementById('view-folders').classList.add('hidden');
+            document.getElementById('view-files').classList.remove('hidden');
+            document.getElementById('folderTitle').innerText = name;
+            fbDB.ref('master_data').once('value', s => renderUI(s.val() || {}));
+        }
+
+        function closeFolder() {
+            currentFolder = '';
+            document.getElementById('view-files').classList.add('hidden');
+            document.getElementById('view-folders').classList.remove('hidden');
+        }
+
+        function triggerUpload() {
+            if(currentFolder === 'KILLEFFECTS' || currentFolder === 'SOUNDS') document.getElementById('inpVideo').click();
+            else document.getElementById('inpFile').click();
+        }
+
+        function uploadAction(type) {
+            const file = document.getElementById(type === 'video' ? 'inpVideo' : type === 'photo' ? 'inpPhoto' : 'inpFile').files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const item = { type, folder: type === 'photo' ? 'PHOTOS' : currentFolder, name: file.name, dataUrl: e.target.result };
+                fbDB.ref('master_data').push(item);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderUI(data) {
+            const fileGrid = document.getElementById('fileGrid');
+            const photoGrid = document.getElementById('photoGrid');
+            fileGrid.innerHTML = ''; photoGrid.innerHTML = '';
+
+            for(let id in data) {
+                const item = data[id];
+                const div = document.createElement('div'); div.className = 'folder-card';
+                
+                if(item.folder === currentFolder) {
+                    if(item.type === 'video') {
+                        div.innerHTML = `<video src="${item.dataUrl}" class="kill-vid" autoplay loop muted onmouseover="this.muted=false" onmouseout="this.muted=true"></video><p>${item.name}</p><button class="btn btn-del" onclick="deleteItem('${id}')">REMOVE</button>`;
+                    } else {
+                        div.innerHTML = `<span class="card-icon">📄</span><h3>${item.name}</h3><button class="btn btn-del" onclick="deleteItem('${id}')">REMOVE</button>`;
+                    }
+                    fileGrid.appendChild(div);
+                } else if(item.type === 'photo' && currentTab === 'photos') {
+                    div.innerHTML = `<img src="${item.dataUrl}" style="width:100%; border-radius:15px;"><button class="btn btn-del" onclick="deleteItem('${id}')">DELETE</button>`;
+                    photoGrid.appendChild(div);
+                }
+            }
+        }
+
+        function deleteItem(id) { if(confirm("Delete?")) fbDB.ref('master_data/' + id).remove(); }
+        function hardReset() { if(confirm("Reset All?")) fbDB.ref('master_data').remove(); }
+    </script>
+</body>
+</html>
